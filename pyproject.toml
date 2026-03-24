@@ -1,0 +1,22 @@
+[project]
+name = "vulnmcp"
+version = "0.1.0"
+description = "A modular MCP providing AI-driven vulnerability management skills, including severity classification and automated insights."
+authors = [
+    {name = "Cédric Bonhomme",email = "cedric.bonhomme@circl.lu"}
+]
+license = {text = "AGPL-3.0-or-later"}
+requires-python = ">=3.10,<4.0"
+dependencies = [
+    "fastmcp (>=3.1.1,<4.0.0)",
+    "transformers (>=4.40.0,<5.0.0)",
+    "torch (>=2.0.0,<3.0.0)",
+    "requests (>=2.31.0,<3.0.0)",
+]
+
+[project.scripts]
+vulnmcp = "vulnmcp.server:main"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
