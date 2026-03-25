@@ -1,6 +1,6 @@
 from fastmcp import FastMCP
 
-from vulnmcp.skills import cwe, severity, vulnerability_lookup
+from vulnmcp.skills import cwe, gcve, severity, vulnerability_lookup
 
 mcp = FastMCP(
     name="VulnMCP",
@@ -15,13 +15,16 @@ mcp = FastMCP(
         "to prioritize vulnerabilities based on real-world sighting activity. "
         "Use list_kev_entries to browse, filter, or check Known Exploited "
         "Vulnerability (KEV) catalog entries. "
-        "Use guess_cpes to infer likely CPE identifiers from product keywords."
+        "Use guess_cpes to infer likely CPE identifiers from product keywords. "
+        "Use list_gna_entries, get_gna_entry, search_gna, and list_gcve_references "
+        "to explore the GCVE Global Numbering Authority registry and references."
     ),
 )
 
 severity.register(mcp)
 cwe.register(mcp)
 vulnerability_lookup.register(mcp)
+gcve.register(mcp)
 
 
 def main() -> None:
