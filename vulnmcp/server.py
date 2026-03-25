@@ -10,7 +10,8 @@ mcp = FastMCP(
         "(English or Chinese). Use classify_cwe to identify the CWE category, "
         "and get_recent_vulnerabilities_by_cwe to fetch recent CVEs for a CWE. "
         "Use get_vulnerability to look up a specific CVE, or search_vulnerabilities "
-        "to find vulnerabilities by source, CWE, product, or date."
+        "to find vulnerabilities by source, CWE, product, or date. "
+        "Use guess_cpes to infer likely CPE identifiers from product keywords."
     ),
 )
 

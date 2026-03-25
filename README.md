@@ -47,6 +47,7 @@ poetry run fastmcp run vulnmcp/server.py --transport http --host 127.0.0.1 --por
 | `get_recent_vulnerabilities_by_cwe` | Fetch the 3 most recent CVEs for a given CWE ID. |
 | `get_vulnerability` | Look up a specific vulnerability by ID (e.g. CVE-2025-14847) with optional comments, sightings, bundles, and linked vulnerabilities. |
 | `search_vulnerabilities` | Search vulnerabilities with filters: source, CWE, product, date range, pagination. |
+| `guess_cpes` | Query cpe-guesser with product keywords to infer likely CPE identifiers. |
 
 List all tools:
 
@@ -64,6 +65,9 @@ poetry run fastmcp call vulnmcp/server.py get_vulnerability vulnerability_id=CVE
 
 # Search for recent SQL injection vulnerabilities
 poetry run fastmcp call vulnmcp/server.py search_vulnerabilities cwe=CWE-89 per_page=5
+
+# Guess likely CPE values from product keywords
+poetry run fastmcp call vulnmcp/server.py guess_cpes query='["outlook","connector"]'
 
 # Classify severity from a description
 poetry run fastmcp call vulnmcp/server.py classify_severity \
@@ -99,6 +103,7 @@ claude mcp list
 | Environment variable | Description | Default |
 |---------------------|-------------|---------|
 | `VULNMCP_LOOKUP_URL` | Base URL for the Vulnerability Lookup API | `https://vulnerability.circl.lu` |
+| `VULNMCP_CPE_GUESSER_URL` | Base URL for the cpe-guesser API | `https://cpe-guesser.cve-search.org` |
 
 ## License
 
