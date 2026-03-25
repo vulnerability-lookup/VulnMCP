@@ -45,8 +45,8 @@ poetry run fastmcp run vulnmcp/server.py --transport http --host 127.0.0.1 --por
 | `classify_severity` | Classify vulnerability severity (low/medium/high/critical) from a text description. Supports English and Chinese with auto-detection. |
 | `classify_cwe` | Predict CWE categories from a vulnerability description. Returns top-5 predictions with parent CWE mapping. |
 | `get_recent_vulnerabilities_by_cwe` | Fetch the 3 most recent CVEs for a given CWE ID. |
-| `get_vulnerability` | Look up a specific vulnerability by ID (e.g. CVE-2025-14847) with optional comments, sightings, bundles, and linked vulnerabilities. |
-| `search_vulnerabilities` | Search vulnerabilities with filters: source, CWE, product, date range, pagination. |
+| `get_vulnerability` | Look up a specific vulnerability by ID (e.g. CVE-2025-14847) with optional comments, sightings, bundles, linked vulnerabilities, and KEV enrichment. |
+| `search_vulnerabilities` | Search vulnerabilities with filters: source, CWE, product, date range, pagination, and optional KEV-aware prioritization. |
 | `guess_cpes` | Query cpe-guesser with product keywords to infer likely CPE identifiers. |
 
 List all tools:
