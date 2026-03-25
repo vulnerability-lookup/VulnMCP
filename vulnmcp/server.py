@@ -13,6 +13,8 @@ mcp = FastMCP(
         "to find vulnerabilities by source, CWE, product, or date. "
         "Use search_sightings, create_sighting, and get_most_sighted_vulnerabilities "
         "to prioritize vulnerabilities based on real-world sighting activity. "
+        "Use list_kev_entries to browse, filter, or check Known Exploited "
+        "Vulnerability (KEV) catalog entries. "
         "Use guess_cpes to infer likely CPE identifiers from product keywords."
     ),
 )
