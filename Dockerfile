@@ -1,4 +1,6 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
+
+ARG INSTALL_ML=false
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
 	PYTHONUNBUFFERED=1 \
@@ -19,7 +21,19 @@ RUN poetry install --only main --no-root
 
 COPY . /app
 
-RUN poetry install --only main
+# INSTALL_ML: false (default), cpu, or gpu
+# cpu: installs torch from PyTorch CPU index (~1.6 GB image)
+# gpu: installs torch from default PyPI with CUDA support (~5+ GB image)
+# Version ranges match pyproject.toml.
+RUN if [ "$INSTALL_ML" = "cpu" ]; then \
+	pip install --no-cache-dir "torch>=2.0.0,<3.0.0" --index-url https://download.pytorch.org/whl/cpu && \
+	pip install --no-cache-dir "transformers>=4.40.0,<5.0.0" && \
+	poetry install --only main; \
+	elif [ "$INSTALL_ML" = "gpu" ]; then \
+	poetry install --only main -E ml; \
+	else \
+	poetry install --only main; \
+	fi
 
 EXPOSE 9000
 
