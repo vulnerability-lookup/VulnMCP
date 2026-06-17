@@ -1,12 +1,13 @@
 from fastmcp import FastMCP
 
-from vulnmcp.models.classifier import SeverityClassifier
+from vulnmcp.models.classifier import CWEClassifier, SeverityClassifier
 
 
 def register(mcp: FastMCP) -> None:
-    """Register severity classification tools on the MCP server."""
+    """Register ML classification tools on the MCP server."""
 
-    classifier = SeverityClassifier()
+    severity_classifier = SeverityClassifier()
+    cwe_classifier = CWEClassifier()
 
     @mcp.tool(
         annotations={
@@ -36,4 +37,27 @@ def register(mcp: FastMCP) -> None:
         Returns:
             A dict with: label (severity), score (confidence), model, language.
         """
-        return classifier.classify(description, language=language)
+        return severity_classifier.classify(description, language=language)
+
+    @mcp.tool(
+        annotations={
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False,
+        }
+    )
+    def classify_cwe(description: str) -> dict:
+        """Classify a vulnerability description into CWE categories.
+
+        Uses CIRCL's fine-tuned RoBERTa model to predict the most likely
+        CWE (Common Weakness Enumeration) categories, mapped to their
+        parent CWEs.
+
+        Args:
+            description: The vulnerability description text (English).
+
+        Returns:
+            A dict with: primary_cwe, confidence, predictions (top 5), model.
+        """
+        return cwe_classifier.classify(description)

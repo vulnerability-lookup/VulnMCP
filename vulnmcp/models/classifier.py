@@ -2,7 +2,10 @@ import json
 import unicodedata
 from importlib import resources
 
-from transformers import pipeline
+try:
+    from transformers import pipeline
+except ImportError:
+    pipeline = None
 
 
 SEVERITY_ENGLISH_MODEL = "CIRCL/vulnerability-severity-classification-roberta-base"

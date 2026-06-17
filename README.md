@@ -23,8 +23,46 @@ Requires Python 3.10+ and [Poetry](https://python-poetry.org/) v2+.
 ```bash
 git clone https://github.com/vulnerability-lookup/VulnMCP.git
 cd VulnMCP
-poetry install
+poetry install          # API tools only
+poetry install -E ml    # includes ML classifiers (torch + transformers)
 ```
+
+> **Note:** On Linux, `poetry install -E ml` resolves the default PyTorch wheel
+> which includes CUDA libraries (~5 GB). To replace with CPU-only PyTorch
+> after installation:
+>
+> ```bash
+> poetry install -E ml
+> poetry run pip install --force-reinstall "torch>=2.0.0,<3.0.0" --index-url https://download.pytorch.org/whl/cpu
+> poetry run pip uninstall -y nvidia-cublas-cu12 nvidia-cuda-cupti-cu12 nvidia-cuda-nvrtc-cu12 nvidia-cuda-runtime-cu12 nvidia-cudnn-cu12 nvidia-cufft-cu12 nvidia-curand-cu12 nvidia-cusolver-cu12 nvidia-cusparse-cu12 nvidia-cusparselt-cu12 nvidia-nccl-cu12 nvidia-nvtx-cu12 nvidia-nvjitlink-cu12 nvidia-cufile-cu12 triton 2>/dev/null
+> ```
+
+### Docker
+
+The Dockerfile accepts `INSTALL_ML` with three values:
+
+| Value | Description | Image size |
+|-------|-------------|------------|
+| `false` (default) | API tools only, no torch/transformers | ~593 MB |
+| `cpu` | ML classifiers with CPU-only PyTorch | ~1.6 GB |
+| `gpu` | ML classifiers with CUDA-enabled PyTorch | ~5+ GB |
+
+```bash
+docker build -t vulnmcp .                                    # API only
+docker build --build-arg INSTALL_ML=cpu -t vulnmcp:cpu .     # ML, CPU
+docker build --build-arg INSTALL_ML=gpu -t vulnmcp:gpu .     # ML, GPU/CUDA
+```
+
+The `gpu` variant requires [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) and must be run with GPU access:
+
+```bash
+docker run --gpus all -p 9000:9000 vulnmcp:gpu
+```
+
+The `cpu` variant installs `torch` via pip from the PyTorch CPU index
+rather than from `poetry.lock`, so ML dependency versions may differ
+from the lockfile. The `gpu` variant uses `poetry install -E ml` and
+is fully lockfile-pinned. Non-ML dependencies are always lockfile-pinned.
 
 ## Running the MCP server
 
@@ -48,8 +86,8 @@ poetry run fastmcp run vulnmcp/server.py --transport http --host 127.0.0.1 --por
 
 | Tool | Description |
 |------|-------------|
-| `classify_severity` | Classify vulnerability severity (low/medium/high/critical) from a text description. Supports English, Chinese, and Russian with auto-detection. |
-| `classify_cwe` | Predict CWE categories from a vulnerability description. Returns top-5 predictions with parent CWE mapping. |
+| `classify_severity` | *(requires `-E ml`)* Classify vulnerability severity (low/medium/high/critical) from a text description. Supports English, Chinese, and Russian with auto-detection. |
+| `classify_cwe` | *(requires `-E ml`)* Predict CWE categories from a vulnerability description. Returns top-5 predictions with parent CWE mapping. |
 | `get_recent_vulnerabilities_by_cwe` | Fetch the 3 most recent CVEs for a given CWE ID. |
 | `get_vulnerability` | Look up a specific vulnerability by ID (e.g. CVE-2025-14847) with optional comments, sightings, bundles, linked vulnerabilities, and KEV enrichment. |
 | `search_vulnerabilities` | Search vulnerabilities with filters: source, CWE, product, date range, pagination, and optional KEV-aware prioritization. |
@@ -115,11 +153,11 @@ poetry run fastmcp call vulnmcp/server.py search_gna query=cert
 # List GCVE references (includes KEV catalog UUIDs)
 poetry run fastmcp call vulnmcp/server.py list_gcve_references
 
-# Classify severity from a description
+# Classify severity from a description (requires -E ml)
 poetry run fastmcp call vulnmcp/server.py classify_severity \
     description="A remote code execution vulnerability allows an attacker to execute arbitrary code via a crafted JNDI lookup."
 
-# Classify CWE from a description
+# Classify CWE from a description (requires -E ml)
 poetry run fastmcp call vulnmcp/server.py classify_cwe \
     description="Fix buffer overflow in authentication handler"
 ```

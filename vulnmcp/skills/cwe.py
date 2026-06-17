@@ -1,36 +1,10 @@
 from fastmcp import FastMCP
 
-from vulnmcp.models.classifier import CWEClassifier
 from vulnmcp.skills.vulnerability_lookup import _base_url, _get_session
 
 
 def register(mcp: FastMCP) -> None:
-    """Register CWE classification and lookup tools on the MCP server."""
-
-    classifier = CWEClassifier()
-
-    @mcp.tool(
-        annotations={
-            "readOnlyHint": True,
-            "destructiveHint": False,
-            "idempotentHint": True,
-            "openWorldHint": False,
-        }
-    )
-    def classify_cwe(description: str) -> dict:
-        """Classify a vulnerability description into CWE categories.
-
-        Uses CIRCL's fine-tuned RoBERTa model to predict the most likely
-        CWE (Common Weakness Enumeration) categories, mapped to their
-        parent CWEs.
-
-        Args:
-            description: The vulnerability description text (English).
-
-        Returns:
-            A dict with: primary_cwe, confidence, predictions (top 5), model.
-        """
-        return classifier.classify(description)
+    """Register CWE lookup tools on the MCP server."""
 
     @mcp.tool(
         annotations={
