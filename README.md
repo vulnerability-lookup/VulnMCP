@@ -178,3 +178,17 @@ Please read [CONTRIBUTING.md](./CONTRIBUTING.md) before opening a pull request.
 ## License
 
 [AGPL-3.0-or-later](https://www.gnu.org/licenses/agpl-3.0.html)
+
+## Funding
+
+[AIPITCH](https://www.linkedin.com/company/aipitch)
+(AI-Powered Innovative Toolkit for Cybersecurity Hubs) is a co-funded EU project
+supported by the European Cybersecurity Competence Centre (ECCC) under the
+DIGITAL-ECCC-2024-DEPLOY-CYBER-06-ENABLINGTECH program and
+[CIRCL](https://www.circl.lu).
+
+The project brings together an international consortium to develop AI-based tools
+that enhance the capabilities of operational cybersecurity teams.
+These tools are designed to support critical services, with a focus on national
+security teams, while also being applicable to internal security teams in
+companies and institutions.
