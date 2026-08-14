@@ -10,7 +10,7 @@ VulnMCP is an MCP (Model Context Protocol) server built with [FastMCP](https://g
 
 - **Python**: Requires 3.10+
 - **Package manager**: Poetry (v2+)
-- **Install dependencies**: `poetry install`
+- **Install dependencies**: `poetry install` (CPU-only torch; use `poetry install --extras cuda` on GPU hosts)
 - **Run the MCP server**: `poetry run vulnmcp` (defaults to stdio transport)
 - **Run with specific transport**: `poetry run fastmcp run vulnmcp/server.py --transport http --port 9000`
 - **Add a dependency**: `poetry add <package>`
@@ -38,6 +38,24 @@ All models are downloaded from Hugging Face Hub on first invocation and cached l
 - **Severity (Chinese)**: `CIRCL/vulnerability-severity-classification-chinese-macbert-base` — outputs `低`, `中`, `高` (mapped to English equivalents)
 - **Severity (Russian)**: `CIRCL/vulnerability-severity-classification-russian-ruRoberta-large` — outputs `low`, `medium`, `high`, `critical`
 - **CWE classification**: `CIRCL/cwe-parent-vulnerability-classification-roberta-base` — predicts parent CWE categories (26 classes). Uses `child_to_parent_mapping.json` for hierarchy mapping.
+
+#### CPU vs CUDA torch builds
+
+No PEP 508 marker can detect a GPU, so the torch build is selected by extra. `pyproject.toml` declares two explicit Poetry sources (`pytorch-cpu`, `pytorch-cuda`) and binds them under `[tool.poetry.dependencies]` to three markers that partition the space exactly — every platform/extra combination matches exactly one branch:
+
+| Marker | Source | Resolves to |
+|---|---|---|
+| `sys_platform == 'darwin'` | PyPI (default) | `torch 2.13.0` |
+| `sys_platform != 'darwin' and extra != 'cuda'` | `pytorch-cpu` | `torch 2.13.0+cpu` |
+| `sys_platform != 'darwin' and extra == 'cuda'` | `pytorch-cuda` | `torch 2.13.0+cu130` |
+
+CPU is therefore the default for a bare `poetry install`; there is deliberately no `cpu` extra, since adding one would overlap the `extra != 'cuda'` branch. All three variants are pinned in `poetry.lock`.
+
+macOS must be routed to PyPI: the `pytorch-cpu` index publishes no macOS wheels and no sdist, so a Darwin-matching branch pointing at it makes `poetry install` fail outright with "Unable to find installation candidates". PyPI's torch is CPU/MPS-only on macOS anyway, since no CUDA build exists for that platform — hence the Darwin branch ignores the extra entirely.
+
+When changing these markers, verify the partition still holds rather than assuming: the branches must be mutually exclusive *and* exhaustive. An earlier attempt used a bare `extra == 'cuda'` for the CUDA branch, and Poetry widened it during locking to `extra == "cuda" or sys_platform == "darwin"`, which made two torch versions match on macOS. Check the emitted `markers` on each `torch` entry in `poetry.lock` after re-locking.
+
+Note that `poetry sync` leaves empty `nvidia/`, `cuda/`, and `triton/` directories behind when switching from CUDA to CPU. Python treats those as implicit namespace packages, so `import triton` succeeds but yields an empty module and torch's dynamo fails with `module 'triton' has no attribute 'language'`. Delete the empty directories from `site-packages` if that happens.
 
 ### Vulnerability Lookup API
 

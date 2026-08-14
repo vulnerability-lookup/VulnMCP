@@ -26,6 +26,23 @@ cd VulnMCP
 poetry install
 ```
 
+This installs the CPU-only build of PyTorch, which is what you want on a
+machine without an NVIDIA GPU. Inference on the classification models runs
+fine on CPU.
+
+On a GPU host, opt in to the CUDA build instead:
+
+```bash
+poetry install --extras cuda
+```
+
+This pulls `torch` from the CUDA 13.0 index along with the NVIDIA runtime
+libraries -- roughly 2.5 GB more than the CPU build. There is no `cpu` extra:
+CPU is simply the default when `--extras cuda` is not passed.
+
+On macOS, `torch` always comes from PyPI and the `cuda` extra has no effect,
+since NVIDIA CUDA builds do not exist for that platform.
+
 ## Running the MCP server
 
 ### stdio (default)

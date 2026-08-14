@@ -5,7 +5,8 @@ description = "A modular MCP providing AI-driven vulnerability management skills
 authors = [
     {name = "Cédric Bonhomme",email = "cedric.bonhomme@circl.lu"}
 ]
-license = {text = "AGPL-3.0-or-later"}
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
 requires-python = ">=3.10,<4.0"
 dependencies = [
     "fastmcp (>=3.1.1,<4.0.0)",
@@ -16,9 +17,43 @@ dependencies = [
     "pyvulnerabilitylookup (>=2.19.0,<3.0.0)",
 ]
 
+[project.optional-dependencies]
+# Opt in with `poetry install --extras cuda` on GPU hosts. Without it, the
+# CPU-only wheels are installed (see [tool.poetry.dependencies] below).
+cuda = [
+    "torch (>=2.0.0,<3.0.0)",
+]
+
 [project.scripts]
 vulnmcp = "vulnmcp.server:main"
 
+# torch ships as separate CPU and CUDA builds served from different indexes.
+# No PEP 508 marker can detect a GPU, so the build is selected by extra: the
+# markers are mutually exclusive, and the `extra != 'cuda'` branches make CPU
+# the default for a bare `poetry install`.
+#
+# macOS is exempt from the pytorch-cpu index, which publishes no macOS wheels
+# and no sdist. PyPI's torch is CPU-only on Darwin anyway (no CUDA builds
+# exist for macOS), so routing it there yields the same result.
+[tool.poetry.dependencies]
+torch = [
+    { markers = "sys_platform == 'darwin'" },
+    { markers = "sys_platform != 'darwin' and extra != 'cuda'", source = "pytorch-cpu" },
+    { markers = "sys_platform != 'darwin' and extra == 'cuda'", source = "pytorch-cuda" },
+]
+
+[[tool.poetry.source]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "explicit"
+
+[[tool.poetry.source]]
+name = "pytorch-cuda"
+url = "https://download.pytorch.org/whl/cu130"
+priority = "explicit"
+
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
+# >=2.1.0: earlier versions silently ignore the PEP 639 `license` expression
+# and `license-files`, emitting Metadata-Version 2.3 with the legacy field.
+requires = ["poetry-core>=2.1.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
