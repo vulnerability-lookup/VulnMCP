@@ -4,20 +4,31 @@ All notable changes to VulnMCP will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [2.0.0] - 2026-08-30
 
 ### Added
 
+- **ATT&CK technique classification** skill (`classify_attack_techniques`) predicting MITRE ATT&CK (Enterprise) techniques from vulnerability descriptions with CIRCL's fine-tuned multi-label RoBERTa model.
+- **Russian severity classification** support in `classify_severity` using CIRCL's ruRoBERTa-large model, with automatic language detection alongside English and Chinese.
+- `search_comments` and `search_bundles` tools to find community comments and curated vulnerability bundles.
 - **CNA partners** tools in the GCVE skill, using the CNA partners support added in gcve 0.13.0:
   - `search_cna_partners` -- search the CNA partners of the CVE Program by name, country, program role, or organization type.
   - `get_cna_partner` -- get one partner's full record (disclosure policy, security advisory links, contacts, root hierarchy) by exact short name.
 - Offline pytest test suite and a GitHub Actions workflow running it on Python 3.10 and 3.13.
+- `prompts/` directory with a prompt for generating monthly vulnerability reports.
 
 ### Changed
 
 - Extracted the shared Vulnerability Lookup HTTP layer into `vulnmcp/lookup.py`; MCP tools are now plain module-level functions registered by each skill's `register()`.
 - `transformers` (and torch) are imported lazily, cutting package import time to well under a second.
+- Sighting and comment/bundle tools use the PyVulnerabilityLookup client.
+- CPU-only torch is installed by default; CUDA builds are opt-in via `poetry install --extras cuda`.
+- Upgraded to transformers 5.x.
 - `get_recent_vulnerabilities_by_cwe` now prefers English descriptions when a record carries several languages.
+
+### Removed
+
+- The Dockerfile.
 
 ## [1.0.0] - 2026-03-26
 

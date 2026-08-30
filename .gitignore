@@ -3,3 +3,6 @@ __pycache__/
 .mypy_cache/
 
 .gcve/
+
+# Build artifacts
+dist/
