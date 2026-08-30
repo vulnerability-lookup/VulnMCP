@@ -52,8 +52,17 @@ name = "pytorch-cuda"
 url = "https://download.pytorch.org/whl/cu130"
 priority = "explicit"
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
 [build-system]
 # >=2.1.0: earlier versions silently ignore the PEP 639 `license` expression
 # and `license-files`, emitting Metadata-Version 2.3 with the legacy field.
 requires = ["poetry-core>=2.1.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "pytest (>=9.1.1,<10.0.0)"
+]

@@ -2,7 +2,13 @@ import json
 import unicodedata
 from importlib import resources
 
-from transformers import pipeline
+
+def _pipeline(*args, **kwargs):
+    # transformers (and torch behind it) takes seconds to import, so pull
+    # it in only when a model is actually loaded, not on package import.
+    from transformers import pipeline
+
+    return pipeline(*args, **kwargs)
 
 
 SEVERITY_ENGLISH_MODEL = "CIRCL/vulnerability-severity-classification-roberta-base"
@@ -46,7 +52,7 @@ class SeverityClassifier:
     @property
     def english_pipeline(self):
         if self._english_pipeline is None:
-            self._english_pipeline = pipeline(
+            self._english_pipeline = _pipeline(
                 "text-classification", model=SEVERITY_ENGLISH_MODEL
             )
         return self._english_pipeline
@@ -54,7 +60,7 @@ class SeverityClassifier:
     @property
     def chinese_pipeline(self):
         if self._chinese_pipeline is None:
-            self._chinese_pipeline = pipeline(
+            self._chinese_pipeline = _pipeline(
                 "text-classification", model=SEVERITY_CHINESE_MODEL
             )
         return self._chinese_pipeline
@@ -62,7 +68,7 @@ class SeverityClassifier:
     @property
     def russian_pipeline(self):
         if self._russian_pipeline is None:
-            self._russian_pipeline = pipeline(
+            self._russian_pipeline = _pipeline(
                 "text-classification", model=SEVERITY_RUSSIAN_MODEL
             )
         return self._russian_pipeline
@@ -138,7 +144,7 @@ class AttackTechniqueClassifier:
     @property
     def attack_pipeline(self):
         if self._pipeline is None:
-            self._pipeline = pipeline(
+            self._pipeline = _pipeline(
                 "text-classification",
                 model=ATTACK_MODEL,
                 function_to_apply="sigmoid",
@@ -214,7 +220,7 @@ class CWEClassifier:
     @property
     def cwe_pipeline(self):
         if self._pipeline is None:
-            self._pipeline = pipeline(
+            self._pipeline = _pipeline(
                 "text-classification", model=CWE_MODEL
             )
         return self._pipeline

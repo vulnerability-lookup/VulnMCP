@@ -13,22 +13,25 @@ VulnMCP is an MCP (Model Context Protocol) server built with [FastMCP](https://g
 - **Install dependencies**: `poetry install` (CPU-only torch; use `poetry install --extras cuda` on GPU hosts)
 - **Run the MCP server**: `poetry run vulnmcp` (defaults to stdio transport)
 - **Run with specific transport**: `poetry run fastmcp run vulnmcp/server.py --transport http --port 9000`
-- **Add a dependency**: `poetry add <package>`
+- **Add a dependency**: `poetry add <package>` (dev tools: `poetry add --group dev <package>`)
+- **Run the tests**: `poetry run pytest` — fast (<1s), fully offline: HTTP, the PyVulnerabilityLookup client, the GCVE registry, and the transformer pipelines are all faked (see `tests/conftest.py`). CI (`.github/workflows/tests.yml`) runs the suite on Python 3.10 and 3.13.
 
 ## Architecture
 
 The project follows a modular skills-based architecture where each domain capability is a self-contained skill module.
 
-- **`vulnmcp/server.py`** — FastMCP server instance and `main()` entry point. Skills are registered here.
-- **`vulnmcp/skills/`** — Each skill module exposes a `register(mcp)` function that decorates and registers MCP tools onto the server. New skills follow this same pattern.
-- **`vulnmcp/models/`** — ML model wrappers. `classifier.py` provides `SeverityClassifier` and `CWEClassifier`, both lazy-loading Hugging Face pipelines on first use.
+- **`vulnmcp/server.py`** — FastMCP server instance and `main()` entry point. It iterates over `SKILLS`, registering each and assembling the server `instructions` from every skill's `INSTRUCTIONS` string.
+- **`vulnmcp/lookup.py`** — Shared HTTP layer for the Vulnerability Lookup and cpe-guesser APIs: base URLs (env-overridable), the authenticated `requests.Session` and `PyVulnerabilityLookup` client (both cached module-level), `extract_summary` for reshaping raw records, `normalize_payload` for the dict-or-list API responses, and the KEV helpers. Any skill that talks to a Vulnerability Lookup instance goes through this module — tests fake it by monkeypatching `lookup.get_session` / `lookup.get_client`.
+- **`vulnmcp/skills/`** — Each skill module defines its tools as plain module-level functions (so tests can call them directly), an `INSTRUCTIONS` string, and a `register(mcp)` function that applies `mcp.tool(annotations=...)` to each tool.
+- **`vulnmcp/models/`** — ML model wrappers. `classifier.py` provides `SeverityClassifier`, `CWEClassifier` and `AttackTechniqueClassifier`, all lazy-loading Hugging Face pipelines on first use. `transformers` (and torch behind it) is imported lazily inside `_pipeline()`, keeping package import under a second — don't add a top-level `import transformers` back.
 - **`vulnmcp/data/`** — Static data files (e.g. `child_to_parent_mapping.json` for CWE hierarchy). Loaded via `importlib.resources`.
+- **`tests/`** — pytest suite, fully offline. `conftest.py` holds the fakes (`FakeResponse`, `FakeSession`, a sample raw CVE record) and an autouse fixture that resets `lookup`'s cached session/client and clears the `VULNMCP_*` env vars between tests. `test_server.py` asserts the registered tool set, so it must be updated when a tool is added or renamed.
 
 ### Adding a new skill
 
-1. Create `vulnmcp/skills/my_skill.py` with a `register(mcp: FastMCP)` function.
-2. Inside that function, define tools using `@mcp.tool`.
-3. Import and call `my_skill.register(mcp)` in `server.py`.
+1. Create `vulnmcp/skills/my_skill.py`: module-level tool functions, an `INSTRUCTIONS` string mentioning each tool by name, and a `register(mcp: FastMCP)` that applies `mcp.tool(annotations=...)` to them.
+2. Add the module to `SKILLS` in `server.py` (this registers it and folds its `INSTRUCTIONS` into the server instructions).
+3. Add the new tool names to `EXPECTED_TOOLS` in `tests/test_server.py` (it verifies registration, that instructions mention every tool, and the read-only annotations) and write unit tests for the tool functions.
 
 ### Models
 
