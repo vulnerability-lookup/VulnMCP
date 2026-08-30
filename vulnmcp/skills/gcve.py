@@ -1,9 +1,17 @@
 from __future__ import annotations
 
+from gcve.cna import (
+    CNAPartner,
+    find_cna_by_name,
+    get_cna_by_country,
+    get_cna_by_short_name,
+)
 from gcve.gna import GNAEntry, find_gna_by_short_name, get_gna, get_gna_by_short_name
 from gcve.registry import (
+    load_cna_partners,
     load_references,
     load_registry,
+    update_cna_partners,
     update_references,
     update_registry,
     update_registry_public_key,
@@ -14,7 +22,10 @@ from fastmcp import FastMCP
 
 INSTRUCTIONS = (
     "Use list_gna_entries, get_gna_entry, search_gna, and list_gcve_references "
-    "to explore the GCVE Global Numbering Authority registry and references."
+    "to explore the GCVE Global Numbering Authority registry and references. "
+    "Use search_cna_partners to find CNA partners of the CVE Program by name, "
+    "country, role, or organization type, and get_cna_partner for one partner's "
+    "full record (disclosure policy, advisory links, contacts)."
 )
 
 
@@ -106,6 +117,98 @@ def search_gna(query: str) -> dict:
     }
 
 
+def _ensure_cna_partners() -> list[CNAPartner]:
+    """Download (if changed) and return the CNA partners list."""
+    update_cna_partners()
+    return load_cna_partners()
+
+
+def _cna_summary(entry: CNAPartner) -> dict:
+    """Trim a partner record to its identifying fields.
+
+    The full dataset is over 600 KB, so list results leave out the metadata
+    block; get_cna_partner returns it for a single partner.
+    """
+    return {
+        "partner": entry.get("partner", ""),
+        "short_name": entry.get("metadata", {}).get("short_name", ""),
+        "country": entry.get("country", ""),
+        "program_role": entry.get("program_role", ""),
+        "organization_type": entry.get("organization_type", ""),
+        "scope": entry.get("scope", ""),
+    }
+
+
+def search_cna_partners(
+    name: str | None = None,
+    country: str | None = None,
+    program_role: str | None = None,
+    organization_type: str | None = None,
+) -> dict:
+    """Search the CNA partners of the CVE Program.
+
+    All filters are optional and combined with AND; with no filter, every
+    partner is returned. Partners are CVE Numbering Authorities and related
+    organizations as published on cve.org, mirrored at gcve.eu.
+
+    Args:
+        name: Case-insensitive substring match against the partner name or
+            short name (e.g. "circl", "microsoft").
+        country: Country name, case-insensitive exact match (e.g. "Luxembourg").
+        program_role: Case-insensitive substring match against the program
+            role (e.g. "CNA", "Root", "CNA-LR").
+        organization_type: Case-insensitive substring match against the
+            organization type (e.g. "Vendor", "CERT").
+
+    Returns:
+        A dict with the count and matching partners, each trimmed to:
+        partner, short_name, country, program_role, organization_type, scope.
+        Use get_cna_partner with a short_name for the full record.
+    """
+    partners = _ensure_cna_partners()
+
+    if name:
+        partners = find_cna_by_name(name.strip(), partners)
+    if country:
+        partners = get_cna_by_country(country.strip(), partners)
+    if program_role:
+        role = program_role.strip().lower()
+        partners = [p for p in partners if role in p.get("program_role", "").lower()]
+    if organization_type:
+        org = organization_type.strip().lower()
+        partners = [
+            p for p in partners if org in p.get("organization_type", "").lower()
+        ]
+
+    return {
+        "count": len(partners),
+        "partners": [_cna_summary(p) for p in partners],
+    }
+
+
+def get_cna_partner(short_name: str) -> dict:
+    """Get the full record of one CNA partner of the CVE Program.
+
+    The short name is the CVE Program identifier for the partner — the same
+    value that appears as assignerShortName in CVE records — so this tool can
+    identify the authority behind a CVE returned by get_vulnerability.
+    Use search_cna_partners to discover short names.
+
+    Args:
+        short_name: The partner's exact short name (e.g. "CIRCL", "microsoft").
+
+    Returns:
+        The full partner record, including metadata with cna_id, contacts,
+        disclosure policy, security advisory links, and the root hierarchy —
+        or an error message if not found.
+    """
+    partners = _ensure_cna_partners()
+    result = get_cna_by_short_name(short_name.strip(), partners)
+    if result is None:
+        return {"error": "CNA partner not found", "short_name": short_name}
+    return dict(result)
+
+
 def list_gcve_references() -> dict:
     """List GCVE references (vulnerability dataset sources and their GNA mappings).
 
@@ -131,5 +234,12 @@ def register(mcp: FastMCP) -> None:
         "idempotentHint": True,
         "openWorldHint": False,
     }
-    for tool in (list_gna_entries, get_gna_entry, search_gna, list_gcve_references):
+    for tool in (
+        list_gna_entries,
+        get_gna_entry,
+        search_gna,
+        list_gcve_references,
+        search_cna_partners,
+        get_cna_partner,
+    ):
         mcp.tool(annotations=annotations)(tool)

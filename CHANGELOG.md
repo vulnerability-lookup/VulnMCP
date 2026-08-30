@@ -4,6 +4,21 @@ All notable changes to VulnMCP will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- **CNA partners** tools in the GCVE skill, using the CNA partners support added in gcve 0.13.0:
+  - `search_cna_partners` -- search the CNA partners of the CVE Program by name, country, program role, or organization type.
+  - `get_cna_partner` -- get one partner's full record (disclosure policy, security advisory links, contacts, root hierarchy) by exact short name.
+- Offline pytest test suite and a GitHub Actions workflow running it on Python 3.10 and 3.13.
+
+### Changed
+
+- Extracted the shared Vulnerability Lookup HTTP layer into `vulnmcp/lookup.py`; MCP tools are now plain module-level functions registered by each skill's `register()`.
+- `transformers` (and torch) are imported lazily, cutting package import time to well under a second.
+- `get_recent_vulnerabilities_by_cwe` now prefers English descriptions when a record carries several languages.
+
 ## [1.0.0] - 2026-03-26
 
 ### Added

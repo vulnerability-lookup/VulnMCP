@@ -20,6 +20,8 @@ EXPECTED_TOOLS = {
     "get_gna_entry",
     "search_gna",
     "list_gcve_references",
+    "search_cna_partners",
+    "get_cna_partner",
 }
 
 

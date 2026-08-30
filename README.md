@@ -15,6 +15,7 @@
 * **Vulnerability Lookup** -- Query the [Vulnerability Lookup](https://vulnerability.circl.lu) API to get detailed information about specific CVEs, search vulnerabilities by source, CWE, product, or date, find community comments, and discover curated vulnerability bundles.
 * **KEV Catalog** -- Browse and filter Known Exploited Vulnerability (KEV) entries, check whether a CVE appears in a KEV catalog, find recently added entries, and filter by catalog origin (CISA KEV, CIRCL, EUVD KEV).
 * **GCVE Registry** -- Query the [GCVE](https://gcve.eu) Global Numbering Authority (GNA) registry and references to discover vulnerability allocators and KEV catalog identifiers.
+* **CNA Partners** -- Search the CNA partners of the CVE Program (mirrored at [gcve.eu](https://gcve.eu)) by name, country, role, or organization type, and retrieve a partner's full record including disclosure policy and security advisory links.
 * **Modular Architecture** -- Easily add new skills or tools to expand the functionality of the MCP server.
 
 ## Installation
@@ -83,6 +84,8 @@ poetry run fastmcp run vulnmcp/server.py --transport http --host 127.0.0.1 --por
 | `get_gna_entry` | Get a specific GNA entry by numeric ID or exact short name. |
 | `search_gna` | Search GNA entries by name (case-insensitive substring match). |
 | `list_gcve_references` | List GCVE references including KEV catalog UUIDs for use with `list_kev_entries`. |
+| `search_cna_partners` | Search the CNA partners of the CVE Program by name, country, program role, or organization type. |
+| `get_cna_partner` | Get one CNA partner's full record (disclosure policy, advisory links, contacts) by exact short name. |
 
 List all tools:
 
@@ -133,6 +136,12 @@ poetry run fastmcp call vulnmcp/server.py search_gna query=cert
 
 # List GCVE references (includes KEV catalog UUIDs)
 poetry run fastmcp call vulnmcp/server.py list_gcve_references
+
+# Search CNA partners of the CVE Program
+poetry run fastmcp call vulnmcp/server.py search_cna_partners country=Luxembourg
+
+# Get one CNA partner's full record
+poetry run fastmcp call vulnmcp/server.py get_cna_partner short_name=CIRCL
 
 # Classify severity from a description
 poetry run fastmcp call vulnmcp/server.py classify_severity \
