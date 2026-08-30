@@ -1,6 +1,6 @@
 from fastmcp import FastMCP
 
-from vulnmcp.skills import cwe, gcve, severity, vulnerability_lookup
+from vulnmcp.skills import attack, cwe, gcve, severity, vulnerability_lookup
 
 mcp = FastMCP(
     name="VulnMCP",
@@ -9,6 +9,8 @@ mcp = FastMCP(
         "Use classify_severity to assess criticality from a description "
         "(English, Chinese, or Russian). Use classify_cwe to identify the CWE category, "
         "and get_recent_vulnerabilities_by_cwe to fetch recent CVEs for a CWE. "
+        "Use classify_attack_techniques to predict MITRE ATT&CK techniques "
+        "from a vulnerability description. "
         "Use get_vulnerability to look up a specific CVE, or search_vulnerabilities "
         "to find vulnerabilities by source, CWE, product, or date. "
         "Use search_sightings, create_sighting, and get_most_sighted_vulnerabilities "
@@ -25,6 +27,7 @@ mcp = FastMCP(
 
 severity.register(mcp)
 cwe.register(mcp)
+attack.register(mcp)
 vulnerability_lookup.register(mcp)
 gcve.register(mcp)
 

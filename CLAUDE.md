@@ -38,6 +38,7 @@ All models are downloaded from Hugging Face Hub on first invocation and cached l
 - **Severity (Chinese)**: `CIRCL/vulnerability-severity-classification-chinese-macbert-base` — outputs `低`, `中`, `高` (mapped to English equivalents)
 - **Severity (Russian)**: `CIRCL/vulnerability-severity-classification-russian-ruRoberta-large` — outputs `low`, `medium`, `high`, `critical`
 - **CWE classification**: `CIRCL/cwe-parent-vulnerability-classification-roberta-base` — predicts parent CWE categories (26 classes). Uses `child_to_parent_mapping.json` for hierarchy mapping.
+- **ATT&CK technique classification**: `CIRCL/vulnerability-attack-technique-classification-roberta-base` — multi-label prediction of MITRE ATT&CK (Enterprise) techniques (sigmoid per label; scores >= 0.5 are positive predictions, matching the trainer's F1 threshold). Trained with VulnTrain (`vulntrain-train-attack-classification`). Uses `attack_technique_names.json` (technique ID → name, extracted from the enterprise ATT&CK STIX bundle) for human-readable names.
 
 #### CPU vs CUDA torch builds
 

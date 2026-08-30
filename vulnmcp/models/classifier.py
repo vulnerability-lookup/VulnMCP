@@ -9,6 +9,7 @@ SEVERITY_ENGLISH_MODEL = "CIRCL/vulnerability-severity-classification-roberta-ba
 SEVERITY_CHINESE_MODEL = "CIRCL/vulnerability-severity-classification-chinese-macbert-base"
 SEVERITY_RUSSIAN_MODEL = "CIRCL/vulnerability-severity-classification-russian-ruRoberta-large"
 CWE_MODEL = "CIRCL/cwe-parent-vulnerability-classification-roberta-base"
+ATTACK_MODEL = "CIRCL/vulnerability-attack-technique-classification-roberta-base"
 
 # Mapping Chinese labels to English equivalents
 CHINESE_LABEL_MAP = {
@@ -109,6 +110,90 @@ class SeverityClassifier:
             "score": round(result["score"], 4),
             "model": model_used,
             "language": language,
+        }
+
+
+def _load_technique_names() -> dict[str, str]:
+    data_files = resources.files("vulnmcp.data")
+    names_file = data_files.joinpath("attack_technique_names.json")
+    return json.loads(names_file.read_text(encoding="utf-8"))
+
+
+class AttackTechniqueClassifier:
+    """Lazy-loading wrapper around the CIRCL ATT&CK technique model.
+
+    Unlike the severity and CWE classifiers this is a multi-label task:
+    every technique in the model's vocabulary is scored independently
+    (sigmoid, not softmax), and scores at or above 0.5 are the model's
+    positive predictions — the same threshold the trainer uses for its
+    F1 metrics.
+    """
+
+    PREDICTION_THRESHOLD = 0.5
+
+    def __init__(self) -> None:
+        self._pipeline = None
+        self._technique_names: dict[str, str] | None = None
+
+    @property
+    def attack_pipeline(self):
+        if self._pipeline is None:
+            self._pipeline = pipeline(
+                "text-classification",
+                model=ATTACK_MODEL,
+                function_to_apply="sigmoid",
+            )
+        return self._pipeline
+
+    @property
+    def technique_names(self) -> dict[str, str]:
+        if self._technique_names is None:
+            self._technique_names = _load_technique_names()
+        return self._technique_names
+
+    def classify(
+        self, description: str, title: str = "", top_k: int = 10
+    ) -> dict:
+        """Rank MITRE ATT&CK techniques for a vulnerability description.
+
+        Args:
+            description: The vulnerability description text.
+            title: Optional vulnerability title, prepended to the
+                   description exactly as during training.
+            top_k: Number of ranked techniques to return.
+
+        Returns:
+            Dict with keys: predicted_techniques, techniques, model.
+        """
+        description = description.strip()
+        if not description:
+            raise ValueError("Description must not be empty.")
+
+        text = f"{title.strip()}\n{description}".strip()
+        results = self.attack_pipeline(
+            text, top_k=None, truncation=True, max_length=512
+        )
+
+        techniques = []
+        for r in results[:top_k]:
+            score = round(r["score"], 4)
+            techniques.append({
+                "technique": r["label"],
+                "name": self.technique_names.get(r["label"]),
+                "score": score,
+                "predicted": score >= self.PREDICTION_THRESHOLD,
+            })
+
+        predicted = [
+            r["label"]
+            for r in results
+            if round(r["score"], 4) >= self.PREDICTION_THRESHOLD
+        ]
+
+        return {
+            "predicted_techniques": predicted,
+            "techniques": techniques,
+            "model": ATTACK_MODEL,
         }
 
 
