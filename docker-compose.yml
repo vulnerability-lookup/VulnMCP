@@ -1,0 +1,15 @@
+services:
+  vulnmcp:
+    build: .
+    ports:
+      - "9000:9000"
+    environment:
+      - VULNMCP_LOOKUP_URL
+      - VULNMCP_API_KEY
+    healthcheck:
+      test: ["CMD-SHELL", "curl -so /dev/null -w '%{http_code}' http://localhost:9000/mcp | grep -q 406"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
