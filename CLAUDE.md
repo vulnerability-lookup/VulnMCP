@@ -49,9 +49,9 @@ No PEP 508 marker can detect a GPU, so the torch build is selected by extra. `py
 
 | Marker | Source | Resolves to |
 |---|---|---|
-| `sys_platform == 'darwin'` | PyPI (default) | `torch 2.13.0` |
-| `sys_platform != 'darwin' and extra != 'cuda'` | `pytorch-cpu` | `torch 2.13.0+cpu` |
-| `sys_platform != 'darwin' and extra == 'cuda'` | `pytorch-cuda` | `torch 2.13.0+cu130` |
+| `sys_platform == 'darwin'` | PyPI (default) | `torch 2.14.1` |
+| `sys_platform != 'darwin' and extra != 'cuda'` | `pytorch-cpu` | `torch 2.14.1+cpu` |
+| `sys_platform != 'darwin' and extra == 'cuda'` | `pytorch-cuda` | `torch 2.14.1+cu130` |
 
 CPU is therefore the default for a bare `poetry install`; there is deliberately no `cpu` extra, since adding one would overlap the `extra != 'cuda'` branch. All three variants are pinned in `poetry.lock`.
 
