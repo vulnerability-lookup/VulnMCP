@@ -58,6 +58,26 @@ class TestSeverityClassifier:
         assert result["language"] == "ru"
         assert result["model"] == SEVERITY_RUSSIAN_MODEL
 
+    @pytest.mark.parametrize(
+        "attr,text",
+        [
+            ("_english_pipeline", "Remote code execution"),
+            ("_chinese_pipeline", "缓冲区溢出漏洞"),
+            ("_russian_pipeline", "уязвимость переполнения буфера"),
+        ],
+    )
+    def test_long_inputs_truncated_to_model_window(self, attr, text):
+        seen = {}
+
+        def pipe(text, **kwargs):
+            seen.update(kwargs)
+            return [{"label": "LOW", "score": 0.5}]
+
+        c = SeverityClassifier()
+        setattr(c, attr, pipe)
+        c.classify(text)
+        assert seen == {"truncation": True, "max_length": 512}
+
     def test_explicit_language_overrides_detection(self):
         c = SeverityClassifier()
         c._russian_pipeline = fake_pipeline("LOW", 0.7)
@@ -68,7 +88,7 @@ class TestSeverityClassifier:
 class TestCWEClassifier:
     def test_classify_maps_parents_and_confidence(self, monkeypatch):
         c = CWEClassifier()
-        c._pipeline = lambda text, top_k: [
+        c._pipeline = lambda text, top_k, **kwargs: [
             {"label": "79", "score": 0.6},
             {"label": "89", "score": 0.2},
         ]
@@ -85,12 +105,26 @@ class TestCWEClassifier:
 
     def test_single_prediction_confidence_is_its_score(self):
         c = CWEClassifier()
-        c._pipeline = lambda text, top_k: [{"label": "79", "score": 0.55}]
+        c._pipeline = lambda text, top_k, **kwargs: [{"label": "79", "score": 0.55}]
         c._child_to_parent = {}
         result = c.classify("XSS")
         assert result["confidence"] == 0.55
         # Unmapped CWE falls back to itself as parent
         assert result["predictions"][0]["parent_cwe_id"] == "CWE-79"
+
+    def test_long_inputs_truncated_to_model_window(self):
+        seen = {}
+
+        def pipe(text, **kwargs):
+            seen.update(kwargs)
+            return [{"label": "79", "score": 0.55}]
+
+        c = CWEClassifier()
+        c._pipeline = pipe
+        c._child_to_parent = {}
+        c.classify("XSS")
+        assert seen["truncation"] is True
+        assert seen["max_length"] == 512
 
     def test_empty_description_rejected(self):
         with pytest.raises(ValueError):

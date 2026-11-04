@@ -17,6 +17,12 @@ SEVERITY_RUSSIAN_MODEL = "CIRCL/vulnerability-severity-classification-russian-ru
 CWE_MODEL = "CIRCL/cwe-parent-vulnerability-classification-roberta-base"
 ATTACK_MODEL = "CIRCL/vulnerability-attack-technique-classification-roberta-base"
 
+# All models are BERT/RoBERTa-family with a 512-token window. Inputs longer
+# than that overflow the position embeddings ("index 514 is out of bounds"),
+# so every pipeline call truncates to this length.
+MAX_LENGTH = 512
+TRUNCATION = {"truncation": True, "max_length": MAX_LENGTH}
+
 # Mapping Chinese labels to English equivalents
 CHINESE_LABEL_MAP = {
     "高": "high",
@@ -99,15 +105,15 @@ class SeverityClassifier:
                 language = "en"
 
         if language == "zh":
-            result = self.chinese_pipeline(description)[0]
+            result = self.chinese_pipeline(description, **TRUNCATION)[0]
             label = CHINESE_LABEL_MAP.get(result["label"], result["label"])
             model_used = SEVERITY_CHINESE_MODEL
         elif language == "ru":
-            result = self.russian_pipeline(description)[0]
+            result = self.russian_pipeline(description, **TRUNCATION)[0]
             label = result["label"].lower()
             model_used = SEVERITY_RUSSIAN_MODEL
         else:
-            result = self.english_pipeline(description)[0]
+            result = self.english_pipeline(description, **TRUNCATION)[0]
             label = result["label"].lower()
             model_used = SEVERITY_ENGLISH_MODEL
 
@@ -177,7 +183,7 @@ class AttackTechniqueClassifier:
 
         text = f"{title.strip()}\n{description}".strip()
         results = self.attack_pipeline(
-            text, top_k=None, truncation=True, max_length=512
+            text, top_k=None, **TRUNCATION
         )
 
         techniques = []
@@ -244,7 +250,9 @@ class CWEClassifier:
         if not description:
             raise ValueError("Description must not be empty.")
 
-        results = self.cwe_pipeline(description, top_k=self.top_k)
+        results = self.cwe_pipeline(
+            description, top_k=self.top_k, **TRUNCATION
+        )
 
         predictions = []
         for r in results:
