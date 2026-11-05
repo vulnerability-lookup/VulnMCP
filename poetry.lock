@@ -93,19 +93,19 @@ files = [
 
 [[package]]
 name = "authlib"
-version = "1.8.0"
+version = "1.9.4"
 description = "The ultimate Python library in building OAuth and OpenID Connect servers and clients."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "authlib-1.8.0-py2.py3-none-any.whl", hash = "sha256:88aebbd9af6757e14e912d5dc007ae1dc1f3e27e3b2152ce7c552ee2c3b3c121"},
-    {file = "authlib-1.8.0.tar.gz", hash = "sha256:f3ecd5f1da737262fb53bf1a4d95c4ea1ad9dd509316587a255c99ab1838a4f0"},
+    {file = "authlib-1.9.4-py2.py3-none-any.whl", hash = "sha256:1b092ea87ba11cf3bd06d38ec993d82bc6255995fcd85ee436cbbba1d050b2fc"},
+    {file = "authlib-1.9.4.tar.gz", hash = "sha256:f55a25f561f1f157ceca64da9df776f469f23715ac89ee338aa2f83dc9774e13"},
 ]
 
 [package.dependencies]
 cryptography = ">=45.0.1"
-joserfc = ">=1.6.1"
+joserfc = ">=1.6.8"
 
 [[package]]
 name = "backports-tarfile"
